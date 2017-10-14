@@ -1,0 +1,7 @@
+routes:
+   orderapi: 
+    methodName: .+
+    serviceId: spring-cloud-order-create
+   ordersearch:
+    methodName: .+
+    serviceId: spring-cloud-order-search
