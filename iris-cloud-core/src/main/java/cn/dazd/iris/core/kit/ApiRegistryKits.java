@@ -3,9 +3,12 @@ package cn.dazd.iris.core.kit;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -119,13 +122,50 @@ public class ApiRegistryKits {
 		try {
 			for (Method method : mt) {
 
+				String structClassNamePrefix = new StringBuffer(service.getName()).append("$").append(method.getName())
+						.append("_").toString();
+				// 获取args类
+				Class<?> args_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
+						structClassNamePrefix + "args");
+				// 获取result类
+				Class<?> result_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
+						structClassNamePrefix + "result");
+
 				// 注册方法，方法名严格区分大小写
 				ProtocolBuilder.gettChannel().makeSubChannel(service.getSimpleName()).register(
 						new StringBuffer(service.getSimpleName()).append("::").append(method.getName()).toString(),
-						new ApiHandlerImpl(service.getName(), instanceType.newInstance(), method));
+						new ApiHandlerImpl(instanceType.newInstance(), method, args_class, result_class,
+								getArgsMethods(args_class.newInstance().toString())));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * 获取args里构造体参数的方法名,反射的时候需要用到
+	 * 
+	 * @param args_class
+	 * @return
+	 */
+	List<String> getArgsMethods(String argsObjStr) {
+
+		List<String> args_methods = new ArrayList<String>();
+		try {
+			// 实例化一个args对象
+			Pattern p = Pattern.compile("(\\w+)[:]", Pattern.CASE_INSENSITIVE);
+			Matcher m = p.matcher(argsObjStr.toString());
+			while (m.find()) {
+				char[] mstr = m.group(1).toCharArray();
+				if (mstr[0] > 96 && mstr[0] < 123) {
+					mstr[0] -= 32;
+				}
+				args_methods.add("get" + new String(mstr));
+			}
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
+		return args_methods;
+	}
+
 }

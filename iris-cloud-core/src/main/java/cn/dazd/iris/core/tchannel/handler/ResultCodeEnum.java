@@ -29,11 +29,5 @@ public enum ResultCodeEnum {
         return this.type;
     }
 
-    public static Result getResultByResultCodeEnum(ResultCodeEnum resultCodeEnum){
-        Result result = new Result();
-        result.setCode(resultCodeEnum.getValue());
-        result.setMessage(resultCodeEnum.getMessage());
-        return result;
-    }
 }
 
