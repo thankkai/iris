@@ -1,6 +1,6 @@
 package cn.dazd.iris.core.dto;
 
-public class GatewayRouteDTO {
+public class GatewayRoute {
 
 	/**
 	 * 路由id,表明来自那个网关
@@ -17,7 +17,7 @@ public class GatewayRouteDTO {
 	 */
 	String serviceId = null;
 
-	public GatewayRouteDTO(String id, String path, String serviceId) {
+	public GatewayRoute(String id, String path, String serviceId) {
 		this.id = id;
 		this.path = path;
 		this.serviceId = serviceId;
