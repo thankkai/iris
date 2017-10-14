@@ -1,0 +1,5 @@
+host:
+  ip: iris-cloud-eureka-1
+  port: 30001
+  serviceName: iris-cloud-eureka
+  processId: 0

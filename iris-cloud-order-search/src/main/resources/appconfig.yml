@@ -1,0 +1,12 @@
+host:
+  ip: iris-cloud-order-search-1
+  port: 30120
+  serviceName: iris-cloud-order-search
+  processId: 0
+  defaultZone:
+  - ip: iris-cloud-eureka-1
+    port: 30001
+  - ip: iris-cloud-eureka-2
+    port: 30002
+package:
+ - cn.dazd.order.search.server.api
