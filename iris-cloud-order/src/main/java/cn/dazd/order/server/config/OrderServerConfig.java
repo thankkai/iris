@@ -1,8 +1,10 @@
 package cn.dazd.order.server.config;
 
+import cn.dazd.iris.core.annotation.EnableGatewayProxy;
 import cn.dazd.iris.core.config.AbstarctProtocolConfig;
 import cn.dazd.iris.core.plugin.PluginCollector;
 
+@EnableGatewayProxy
 public class OrderServerConfig extends AbstarctProtocolConfig {
 
 	@Override
