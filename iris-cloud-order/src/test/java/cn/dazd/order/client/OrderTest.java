@@ -41,9 +41,9 @@ public class OrderTest {
 			// Protocol2 args = new Protocol2(ppp, ppp);
 
 			ListenableFuture<ThriftResponse<ProviderService.gateway_result>> future = tchannel
-					.makeSubChannel("iris-cloud-client").send(
-							new ThriftRequest.Builder<ProviderService.gateway_args>("/order/ProviderService",
-									"ProviderService::gateway").setBody(args).build(),
+					.makeSubChannel("iris-cloud-client")
+					.send(new ThriftRequest.Builder<ProviderService.gateway_args>("ProviderService",
+							"ProviderService::gateway").setBody(args).setTimeout(3000).build(),
 							InetAddress.getLocalHost(), 30100);
 			ThriftResponse<ProviderService.gateway_result> getResult = future.get();
 			ByteBufInputStream bbf = new ByteBufInputStream(getResult.getArg3());

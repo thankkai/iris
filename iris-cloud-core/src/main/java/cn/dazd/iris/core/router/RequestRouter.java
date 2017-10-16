@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package cn.dazd.iris.core.config;
+package cn.dazd.iris.core.router;
 
 import static com.uber.tchannel.frames.ErrorFrame.sendError;
 
@@ -175,8 +175,6 @@ public class RequestRouter extends SimpleChannelInboundHandler<Request> {
 		public CallableHandler(TChannel topChannel, Request request) {
 			this.topChannel = topChannel;
 			this.request = request;
-			handler.setEndpoint(request.getEndpoint());
-			handler.setService(request.getService());
 		}
 
 		@Override
@@ -197,6 +195,7 @@ public class RequestRouter extends SimpleChannelInboundHandler<Request> {
 		}
 
 		private Response callWithoutTracing() throws Exception {
+
 			Response response = handler.handle(request);
 			request.release();
 			return response;

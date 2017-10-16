@@ -26,6 +26,7 @@ import cn.dazd.iris.core.kit.ApiRegistryKits;
 import cn.dazd.iris.core.kit.HostConfigKits;
 import cn.dazd.iris.core.kit.PropertiesUtil;
 import cn.dazd.iris.core.kit.SpiInstantiationKits;
+import cn.dazd.iris.core.router.RequestRouter;
 
 /**
  * @author Administrator

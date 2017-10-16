@@ -1,5 +1,8 @@
 package cn.dazd.order.search.server.api;
 
+import java.util.Calendar;
+import java.util.Locale;
+
 import org.apache.thrift.TException;
 
 import cn.dazd.iris.core.annotation.ApiAnnotation;
@@ -13,7 +16,7 @@ public class OrderSearchAPI implements Iface {
 
 	public Result gateway(Protocol body, Protocol GBody2) throws TException {
 		// TODO Auto-generated method stub
-		return new Result(50, "是打发打发", "翻噶地方是");
+		return new Result(50, Calendar.getInstance(Locale.CHINESE).getTimeInMillis() + "==>是拉开距离看见打发", "翻噶地方是");
 	}
 
 	public Result proxy(Protocol body) throws TException {
