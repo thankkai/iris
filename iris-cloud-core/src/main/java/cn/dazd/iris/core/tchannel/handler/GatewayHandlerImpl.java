@@ -17,7 +17,7 @@ import com.uber.tchannel.messages.ThriftResponse;
 
 import io.netty.buffer.ByteBuf;
 
-// 该类是单例无状态的，不允许定义任何线程不安全的变量
+// 该类是单例无状态的
 @SuppressWarnings("rawtypes")
 public final class GatewayHandlerImpl extends ThriftRequestHandler<org.apache.thrift.TBase, TBase> {
 
