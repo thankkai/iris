@@ -22,6 +22,12 @@ import io.netty.buffer.ByteBuf;
 public final class GatewayHandlerImpl extends ThriftRequestHandler<org.apache.thrift.TBase, TBase> {
 
 	final Logger l = Logger.getLogger("GatewayHandlerImpl");
+	private static TChannel TCHANNEL_CLIENT;
+	{
+		if (TCHANNEL_CLIENT == null) {
+			TCHANNEL_CLIENT = new TChannel.Builder("iris-cloud-client").build();
+		}
+	}
 
 	// 代理把接收到请求及数据，在这里做转发
 	@SuppressWarnings({ "serial", "unchecked" })
@@ -36,13 +42,14 @@ public final class GatewayHandlerImpl extends ThriftRequestHandler<org.apache.th
 
 		l.info(String.format("service:{%s},endpoint:{%s}", request.getService(), request.getEndpoint()));
 
-		TChannel tchannelClient = new TChannel.Builder("iris-cloud-client").build();
+		// TChannel tchannelClient = new
+		// TChannel.Builder("iris-cloud-client").build();
 		// 这里需要增加过滤器，实现中。。。。。，ip写死，测试用，这里是remote的IP和端口
-		SubChannel subChannelClient = tchannelClient.makeSubChannel(request.getService())
+		SubChannel subChannelClient = TCHANNEL_CLIENT.makeSubChannel(request.getService())
 				.setPeers(new ArrayList<InetSocketAddress>() {
 					{
 						// 从缓存里拿到
-						add(new InetSocketAddress("192.168.199.181", 30120));
+						add(new InetSocketAddress("127.0.0.1", 30120));
 					}
 				});
 
