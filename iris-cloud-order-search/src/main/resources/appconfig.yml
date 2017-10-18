@@ -1,5 +1,5 @@
 host:
-  ip: 192.168.199.181
+  ip: 172.30.22.134
   port: 30120
   serviceName: iris-cloud-order-search
   processId: 0

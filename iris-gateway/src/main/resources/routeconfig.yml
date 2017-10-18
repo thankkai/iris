@@ -1,7 +1,5 @@
 routes:
-   orderapi: 
-    methodName: .+
-    serviceId: spring-cloud-order-create
-   ordersearch:
-    methodName: .+
-    serviceId: spring-cloud-order-search
+   - path: /order/ProviderService
+     serviceId: spring-cloud-order-create
+   - path: /order/OrderSearch
+     serviceId: spring-cloud-order-search

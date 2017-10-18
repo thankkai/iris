@@ -23,7 +23,7 @@ import com.uber.tchannel.messages.ThriftResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 
-// 该类是单例无状态的，不允许定义任何线程不安全的变量
+// API接口执行器
 public final class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?>> {
 
 	final Logger l = Logger.getLogger("ApiHandlerImpl");

@@ -66,6 +66,8 @@ public class ApiRegistryKits {
 		}
 	}
 
+	final String IFACE_CLASSNAME_SUFFIX = "$Iface";
+
 	public boolean initGlobalClassInstance()
 			throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
 		// TODO Auto-generated method stub
@@ -92,8 +94,8 @@ public class ApiRegistryKits {
 									.getAllInterfaces(instanceType);
 							// 判断是否实现了iface接口
 							boolean isiface = false;
-							String ifaceClassName = new StringBuilder().append(service.getName()).append("$Iface")
-									.toString();
+							String ifaceClassName = new StringBuilder().append(service.getName())
+									.append(IFACE_CLASSNAME_SUFFIX).toString();
 							for (Class<?> faceclass : interfaces) {
 								if (ifaceClassName.equals(faceclass.getName())) {
 									isiface = true;
@@ -116,6 +118,9 @@ public class ApiRegistryKits {
 		return flag;
 	}
 
+	final String ARGS_CLASS_SUFFIX = "args";
+	final String RESULT_CLASS_SUFFIX = "result";
+
 	void scanMethod(Class<?> service, Class<?> instanceType) throws InstantiationException, IllegalAccessException {
 		// 获取声明的方法，即API接口
 		Method[] mt = instanceType.getDeclaredMethods();
@@ -126,10 +131,10 @@ public class ApiRegistryKits {
 						.append("_").toString();
 				// 获取args类
 				Class<?> args_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
-						structClassNamePrefix + "args");
+						structClassNamePrefix + ARGS_CLASS_SUFFIX);
 				// 获取result类
 				Class<?> result_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
-						structClassNamePrefix + "result");
+						structClassNamePrefix + RESULT_CLASS_SUFFIX);
 
 				// 注册方法，方法名严格区分大小写
 				ProtocolBuilder.gettChannel().makeSubChannel(service.getSimpleName()).register(
@@ -141,6 +146,8 @@ public class ApiRegistryKits {
 			e.printStackTrace();
 		}
 	}
+
+	final String argsMethodPrefix = "get";
 
 	/**
 	 * 获取args里构造体参数的方法名,反射的时候需要用到
@@ -160,7 +167,7 @@ public class ApiRegistryKits {
 				if (mstr[0] > 96 && mstr[0] < 123) {
 					mstr[0] -= 32;
 				}
-				args_methods.add("get" + new String(mstr));
+				args_methods.add(argsMethodPrefix + new String(mstr));
 			}
 		} catch (RuntimeException e) {
 			e.printStackTrace();
