@@ -16,7 +16,7 @@ public class OrderSearchAPI implements Iface {
 
 	public Result gateway(Protocol body, Protocol GBody2) throws TException {
 		// TODO Auto-generated method stub
-		return new Result(50, Calendar.getInstance(Locale.CHINESE).getTimeInMillis() + "==>是拉开距离看见打发", "翻噶地方是");
+		return new Result(50, Calendar.getInstance(Locale.CHINESE).getTimeInMillis() + "=打手动阀手动阀见打发", "翻噶啊手动阀手动阀地方是");
 	}
 
 	public Result proxy(Protocol body) throws TException {
