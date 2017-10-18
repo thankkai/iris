@@ -7,7 +7,7 @@
 package cn.dazd.iris.core.tchannel.thrift;
 
 @SuppressWarnings({"cast", "rawtypes", "serial", "unchecked", "unused"})
-public class OrderApiConstants {
+public class OrderSearchServiceConstants {
 
   public static final java.lang.String VERSION = "0.2.0";
 
