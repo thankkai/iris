@@ -2,7 +2,7 @@ host:
   ip: iris-cloud-gateway-1
   port: 30050
   serviceName: iris-cloud-gateway
-  processId: 0
+  processId: 1
   defaultZone:
   - ip: iris-cloud-eureka-1
     port: 30001

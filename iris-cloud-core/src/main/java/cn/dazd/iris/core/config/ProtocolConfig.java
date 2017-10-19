@@ -25,11 +25,11 @@ public final class ProtocolConfig {
 		config.configPlugin(irisPlugins);
 		// 判断是否标记了网关代理
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableGatewayProxy.class, config.getClass())) {
-			ConfigWrap.enableGatewayProxy = true;
+			ConfigWrap.ENABLE_GATEWAY_PROXY = true;
 		}
 		// 判断是否标记了注册动作
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableToEureka.class, config.getClass())) {
-			ConfigWrap.enableToEureka = true;
+			ConfigWrap.ENABLE_TO_EUREKA = true;
 		}
 	}
 
@@ -52,10 +52,10 @@ public final class ProtocolConfig {
 	 */
 	public static class ConfigWrap {
 		// 默认不开启网关代理
-		public static boolean enableGatewayProxy = false;
+		public static boolean ENABLE_GATEWAY_PROXY = false;
 
 		// 默认不开启注册
-		public static boolean enableToEureka = false;
+		public static boolean ENABLE_TO_EUREKA = false;
 	};
 
 }

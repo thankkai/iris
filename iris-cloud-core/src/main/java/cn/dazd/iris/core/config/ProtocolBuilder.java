@@ -36,11 +36,7 @@ final public class ProtocolBuilder {
 
 	private final static Logger l = Logger.getLogger("ProtocolBuilder");
 	private static TChannel tChannel = null;
-	private final static ExecutorService executorService = new ForkJoinPool();
-
-	public static ExecutorService getExecutorservice() {
-		return executorService;
-	}
+	private final static ExecutorService EXECUTOR_SERVICE = new ForkJoinPool();
 
 	public static TChannel gettChannel() {
 		if (tChannel == null) {
@@ -90,10 +86,10 @@ final public class ProtocolBuilder {
 			TChannel.Builder builder = new TChannel.Builder(hostConfig.getServiceName()).setServerHost(isa.getAddress())
 					.setServerPort(isa.getPort()).setClientMaxPendingRequests(Integer.MAX_VALUE);
 
-			if (ConfigWrap.enableGatewayProxy) {
-				builder.setExecutorService(executorService);
+			if (ConfigWrap.ENABLE_GATEWAY_PROXY) {
+				builder.setExecutorService(EXECUTOR_SERVICE);
 				tChannel = builder.build();
-				tChannel.setCustomRequestRouter(new RequestRouter(tChannel, executorService));
+				tChannel.setCustomRequestRouter(new RequestRouter(tChannel, EXECUTOR_SERVICE));
 			} else {
 				tChannel = builder.build();
 			}

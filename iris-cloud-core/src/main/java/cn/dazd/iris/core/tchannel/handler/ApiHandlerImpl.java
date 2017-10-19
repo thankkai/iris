@@ -66,7 +66,8 @@ public final class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBas
 				args_subobjs.add(MethodUtils.invokeExactMethod(args_object, key));
 			}
 			// 获取业务执行后的返回值，返回值类型必须是thrift构造体
-			Object return_object = MethodUtils.invokeExactMethod(instance, method.getName(), args_subobjs.toArray());
+			Object return_object = MethodUtils.invokeExactMethod(instance, method.getName(), args_subobjs.toArray(),
+					method.getParameterTypes());
 			// 设置result的构造函数
 			result_struct = result_class.getConstructor(this.method.getReturnType());
 			// 实例化result对象
