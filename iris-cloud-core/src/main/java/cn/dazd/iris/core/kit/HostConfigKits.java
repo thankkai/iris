@@ -1,6 +1,6 @@
 package cn.dazd.iris.core.kit;
 
-import java.util.ArrayList;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +11,9 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import cn.dazd.iris.core.config.ProtocolHeader;
@@ -69,13 +71,20 @@ public class HostConfigKits {
 				int port = host.get("port").getAsInt();
 				String serviceName = host.get("serviceName").getAsString();
 				int processId = host.get("processId").getAsInt();
-				List<EurekaZoneDTO> zoneList = new ArrayList<EurekaZoneDTO>();
-				gson.fromJson(host.get("defaultZone"), zoneList.getClass());
+
 				hostConfigDTO = new HostConfigDTO();
 				hostConfigDTO.setProcessId(processId);
 				hostConfigDTO.setIp(ip);
 				hostConfigDTO.setPort(port);
 				hostConfigDTO.setServiceName(serviceName);
+
+				JsonElement routes = host.get("defaultZone");
+				if (null != routes) {
+					@SuppressWarnings("serial")
+					Type ezType = new TypeToken<List<EurekaZoneDTO>>() {
+					}.getType();
+					hostConfigDTO.setEzlist(gson.fromJson(routes, ezType));
+				}
 			} catch (Exception e) {
 				logger.error("加载host配置文件失败，请检查文件名：" + APPLICATION_APPCONFIG_FILE);
 				logger.error("异常信息：" + e.getMessage());

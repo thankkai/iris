@@ -16,7 +16,15 @@ public class EurekaZoneDTO implements Serializable {
 	private static final long serialVersionUID = 8788761166482763831L;
 
 	private String ip = null;
-	private String defaultZone = null;
+	private Integer port = null;
+
+	public Integer getPort() {
+		return port;
+	}
+
+	public void setPort(Integer port) {
+		this.port = port;
+	}
 
 	public String getIp() {
 		return ip;
@@ -26,11 +34,5 @@ public class EurekaZoneDTO implements Serializable {
 		this.ip = ip;
 	}
 
-	public String getDefaultZone() {
-		return defaultZone;
-	}
-
-	public void setDefaultZone(String defaultZone) {
-		this.defaultZone = defaultZone;
-	}
+ 
 }

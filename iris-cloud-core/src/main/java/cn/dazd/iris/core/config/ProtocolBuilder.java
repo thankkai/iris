@@ -17,6 +17,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.uber.tchannel.api.TChannel;
+import com.uber.tchannel.messages.generated.Meta;
 
 import cn.dazd.iris.core.config.ProtocolConfig.ConfigWrap;
 import cn.dazd.iris.core.dto.HostConfigDTO;
@@ -27,6 +28,8 @@ import cn.dazd.iris.core.kit.HostConfigKits;
 import cn.dazd.iris.core.kit.PropertiesUtil;
 import cn.dazd.iris.core.kit.SpiInstantiationKits;
 import cn.dazd.iris.core.router.RequestRouter;
+import cn.dazd.iris.core.tchannel.handler.ToEurekaHandlerImpl;
+import cn.dazd.iris.core.tchannel.thrift.eureka.EurekaService;
 
 /**
  * @author Administrator
@@ -58,10 +61,27 @@ final public class ProtocolBuilder {
 		rwl.writeLock().lock();
 		try {
 			tChannel = createServer();
+			// 需要进行注册服务
+			if (ConfigWrap.ENABLE_TO_EUREKA) {
+
+			}
+
+			// 启动注册中心
+			if (ConfigWrap.ENABLE_EUREKA_SERVER) {
+				String service = EurekaService.class.getSimpleName();
+				String endpoint = new StringBuffer(service).append("::").append("toEureka").toString();
+				tChannel.makeSubChannel(service).register(endpoint, new ToEurekaHandlerImpl());
+			}
+
 			// 注册api接口
 			apiRegistry();
 			// 注册SPI接口
 			// spiRegistry();
+
+			// 注册心跳检测
+			String metaService = Meta.class.getSimpleName();
+			tChannel.makeSubChannel(metaService).registerHealthHandler();
+
 		} catch (RuntimeException e) {
 			l.info(e.getMessage());
 		} finally {
@@ -76,16 +96,13 @@ final public class ProtocolBuilder {
 	 */
 	static TChannel createServer() {
 		l.info("==> the tchannel server is readying ......");
-
 		TChannel tChannel = null;
-
 		try {
-
 			HostConfigDTO hostConfig = HostConfigKits.getAppConfig();
 			InetSocketAddress isa = new InetSocketAddress("0.0.0.0", hostConfig.getPort());
 			TChannel.Builder builder = new TChannel.Builder(hostConfig.getServiceName()).setServerHost(isa.getAddress())
 					.setServerPort(isa.getPort()).setClientMaxPendingRequests(Integer.MAX_VALUE);
-
+			// 启用网关代理
 			if (ConfigWrap.ENABLE_GATEWAY_PROXY) {
 				builder.setExecutorService(EXECUTOR_SERVICE);
 				tChannel = builder.build();
@@ -93,8 +110,6 @@ final public class ProtocolBuilder {
 			} else {
 				tChannel = builder.build();
 			}
-			l.info(String.format("==> tchannel:%s | ip:%s | port:%s | prcessid:%s，the tchannel builded successfully.",
-					hostConfig.getServiceName(), hostConfig.getIp(), hostConfig.getPort(), hostConfig.getProcessId()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

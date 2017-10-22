@@ -1,5 +1,5 @@
 routes:
-   - path: /order/ProviderService
+   - path: order/ProviderService/.*
      serviceId: spring-cloud-order-create
-   - path: /order/OrderSearch
+   - path: order/OrderSearch/.*
      serviceId: spring-cloud-order-search

@@ -2,6 +2,7 @@ package cn.dazd.iris.core.config;
 
 import org.springframework.core.annotation.AnnotationUtils;
 
+import cn.dazd.iris.core.annotation.EnableEurekaServer;
 import cn.dazd.iris.core.annotation.EnableGatewayProxy;
 import cn.dazd.iris.core.annotation.EnableToEureka;
 import cn.dazd.iris.core.plugin.IPlugin;
@@ -23,13 +24,24 @@ public final class ProtocolConfig {
 
 	static void init(AbstarctProtocolConfig config) {
 		config.configPlugin(irisPlugins);
+
+		// 判断是否标记了注册中心
+		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableEurekaServer.class, config.getClass())) {
+			ConfigWrap.ENABLE_EUREKA_SERVER = true;
+		}
+
 		// 判断是否标记了网关代理
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableGatewayProxy.class, config.getClass())) {
 			ConfigWrap.ENABLE_GATEWAY_PROXY = true;
 		}
+
 		// 判断是否标记了注册动作
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableToEureka.class, config.getClass())) {
 			ConfigWrap.ENABLE_TO_EUREKA = true;
+		}
+
+		if (ConfigWrap.ENABLE_EUREKA_SERVER == ConfigWrap.ENABLE_TO_EUREKA == true) {
+			throw new RuntimeException("不允许注册中心与注册动作同时标记");
 		}
 	}
 
@@ -51,6 +63,9 @@ public final class ProtocolConfig {
 	 *
 	 */
 	public static class ConfigWrap {
+		// 默认不开启注册中心
+		public static boolean ENABLE_EUREKA_SERVER = false;
+
 		// 默认不开启网关代理
 		public static boolean ENABLE_GATEWAY_PROXY = false;
 
