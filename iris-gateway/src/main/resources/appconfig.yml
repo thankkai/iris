@@ -6,3 +6,9 @@ host:
   defaultZone:
   - ip: iris-cloud-eureka-1
     port: 30001
+  - ip: iris-cloud-eureka-2
+    port: 30001
+  - ip: iris-cloud-eureka-3
+    port: 30001
+  - ip: iris-cloud-eureka-4
+    port: 30001

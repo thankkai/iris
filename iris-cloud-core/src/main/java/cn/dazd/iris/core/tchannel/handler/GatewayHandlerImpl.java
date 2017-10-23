@@ -15,14 +15,14 @@ import cn.dazd.iris.core.router.RpcKits;
 
 // 该类是单例无状态的
 @SuppressWarnings("rawtypes")
-public final class GatewayHandlerImpl extends ThriftRequestHandler<org.apache.thrift.TBase, TBase> {
+public final class GatewayHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?>> {
 
 	final Logger l = Logger.getLogger("GatewayHandlerImpl");
 
 	// 代理把接收到请求及数据，在这里做转发
 	@SuppressWarnings({ "serial", "unchecked" })
 	@Override
-	public ThriftResponse<TBase> handleImpl(ThriftRequest<org.apache.thrift.TBase> request) {
+	public ThriftResponse<TBase<?, ?>> handleImpl(ThriftRequest<TBase<?, ?>> request) {
 		// 虚拟service路径，格式如下：/领域名称/服务名称
 		String servicePath = "";
 		// 虚拟endpoint路径，支持正则表达,格式如下：get.*,表示仅可访问get开头的api接口

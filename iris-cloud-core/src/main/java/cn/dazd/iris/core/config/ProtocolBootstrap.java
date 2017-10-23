@@ -31,6 +31,7 @@ public class ProtocolBootstrap {
 			if (null != ProtocolBuilder.gettChannel()) {
 				ProtocolBuilder.gettChannel().shutdown(true);
 			}
+			System.exit(0);
 		}
 	}
 

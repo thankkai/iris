@@ -5,16 +5,20 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.thrift.TBase;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.uber.tchannel.api.errors.TChannelError;
 import com.uber.tchannel.api.handlers.RequestHandler;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
@@ -49,6 +53,8 @@ public final class ProtocolConfig {
 
 	public final static Map<String, RequestHandler> ENDPOINT_HANDLER = new Hashtable<>();
 
+	private static boolean TO_EUREKA_STATUS = true;
+
 	static void initialize(AbstarctProtocolConfig config) {
 		config.configPlugin(IRIS_PLUGINS);
 
@@ -58,43 +64,7 @@ public final class ProtocolConfig {
 		// 判断是否标记了注册动作
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableToEureka.class, config.getClass())) {
 			ConfigWrap.ENABLE_TO_EUREKA = true;
-			// 获取注册中心地址列表
-			final HostConfigDTO hcDTO = HostConfigKits.getAppConfig();
-			final toEureka_args args = new toEureka_args();
-			args.setEndpoints(new ArrayList<String>() {
-				private static final long serialVersionUID = -6714878897225577917L;
-				{
-					for (String key : ENDPOINT_HANDLER.keySet()) {
-						this.add(key);
-					}
-				}
-			});
-			args.setHostInfo(new HostInfo() {
-				private static final long serialVersionUID = 6200369699904167142L;
-				{
-					this.setIp(hcDTO.getIp());
-					this.setPort(hcDTO.getPort());
-					this.setProcessId(hcDTO.getProcessId());
-					this.setServiceName(hcDTO.getServiceName());
-				}
-			});
-
-			@SuppressWarnings("rawtypes")
-			ThriftRequest<TBase> request = new ThriftRequest.Builder<TBase>(ProtocolBuilder.EUREKA_SERVICE,
-					ProtocolBuilder.EUREKA_ENDPOINT).setBody(args).build();
-			ThriftResponse<TBase> future = RpcKits.sendRequest(request, new ArrayList<InetSocketAddress>() {
-				private static final long serialVersionUID = -2168116154462801927L;
-				{
-					for (EurekaZoneDTO obj : hcDTO.getZoneList()) {
-						this.add(new InetSocketAddress(obj.getIp(), obj.getPort()));
-					}
-				}
-			});
-			toEureka_result result = (toEureka_result) future.getBody(TBase.class);
-			if (!future.isError() == true) {
-				l.log(Level.SEVERE, "注册中心未连接成功，启动失败。");
-				throw new RuntimeException("严重：注册中心未连接成功，启动失败。");
-			}
+			toEureka();
 		}
 
 		// 判断是否标记了注册中心
@@ -123,8 +93,103 @@ public final class ProtocolConfig {
 		}
 	}
 
-	// 对注册中心进行连接，连接失败则启动失败
-	static void toEureka() {
+	/**
+	 * 对注册中心进行连接，连接失败则启动失败
+	 */
+	private static void toEureka() {
+
+		final HostConfigDTO hcDTO = HostConfigKits.getAppConfig();
+		final toEureka_args args = new toEureka_args();
+		args.setEndpoints(new ArrayList<String>() {
+			private static final long serialVersionUID = -6714878897225577917L;
+			{
+				for (String key : ENDPOINT_HANDLER.keySet()) {
+					this.add(key);
+				}
+			}
+		});
+		args.setHostInfo(new HostInfo() {
+			private static final long serialVersionUID = 6200369699904167142L;
+			{
+				this.setIp(hcDTO.getIp());
+				this.setPort(hcDTO.getPort());
+				this.setProcessId(hcDTO.getProcessId());
+				this.setServiceName(hcDTO.getServiceName());
+			}
+		});
+		final ThriftRequest<toEureka_args> request = new ThriftRequest.Builder<toEureka_args>(
+				ProtocolBuilder.EUREKA_SERVICE, ProtocolBuilder.EUREKA_ENDPOINT).setBody(args).build();
+
+		final CountDownLatch startLatch = new CountDownLatch(1);
+		final CountDownLatch threadLatch = new CountDownLatch(hcDTO.getZoneList().size());
+		Executor executor = Executors.newFixedThreadPool(hcDTO.getZoneList().size());
+		// 加载所有注册线程
+		for (final EurekaZoneDTO obj : hcDTO.getZoneList()) {
+			executor.execute(new RunnableWorker(startLatch, threadLatch, request, obj));
+		}
+		// 并发执行注册线程
+		startLatch.countDown();
+		try {
+			threadLatch.await();
+			if (TO_EUREKA_STATUS == false) {
+				l.log(Level.SEVERE, "注册中心未连接成功，启动失败。");
+				System.exit(0);
+			} else {
+				l.info("注册已完成");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 执行注册线程的内部静态类
+	 * 
+	 * @author Administrator
+	 *
+	 */
+	static class RunnableWorker implements Runnable {
+		private final static Logger l2 = Logger.getLogger(RunnableWorker.class.getName());
+		final CountDownLatch startLatch;
+		final CountDownLatch threadLatch;
+		final ThriftRequest<toEureka_args> request;
+		final EurekaZoneDTO obj;
+
+		public RunnableWorker(final CountDownLatch startLatch, final CountDownLatch threadLatch,
+				final ThriftRequest<toEureka_args> request, final EurekaZoneDTO obj) {
+			this.startLatch = startLatch;
+			this.threadLatch = threadLatch;
+			this.request = request;
+			this.obj = obj;
+		}
+
+		@SuppressWarnings("serial")
+		@Override
+		public void run() {
+			try {
+				startLatch.await();
+				ThriftResponse<toEureka_result> future = RpcKits.sendRequest(request,
+						new ArrayList<InetSocketAddress>() {
+							{
+								this.add(new InetSocketAddress(obj.getIp(), obj.getPort()));
+							}
+						});
+				request.reset();
+				if (null == future) {
+					TO_EUREKA_STATUS = false;
+				}
+				l2.log(Level.SEVERE, "=====================>" + threadLatch.getCount());
+				toEureka_result result = future.getBody(toEureka_result.class);
+				if (result == null) {
+					TO_EUREKA_STATUS = false;
+				}
+			} catch (InterruptedException | TChannelError | ExecutionException e) {
+				l2.log(Level.SEVERE, e.getMessage());
+			} finally {
+				threadLatch.countDown();
+				l2.log(Level.SEVERE, "=====================>" + threadLatch.getCount());
+			}
+		}
 
 	}
 
