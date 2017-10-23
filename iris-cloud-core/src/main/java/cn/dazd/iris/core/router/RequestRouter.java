@@ -37,7 +37,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.uber.tchannel.api.SubChannel;
 import com.uber.tchannel.api.TChannel;
+import com.uber.tchannel.api.handlers.RequestHandler;
 import com.uber.tchannel.errors.ErrorType;
 import com.uber.tchannel.messages.Request;
 import com.uber.tchannel.messages.Response;
@@ -95,9 +97,14 @@ public class RequestRouter extends SimpleChannelInboundHandler<Request> {
 			sendError(ErrorType.BadRequest, "Expected incoming call to have endpoint", request, ctx);
 			return;
 		}
+		// 网关本地找不到handler，那么使用网关代理
+		RequestHandler handler = this.getRequestHandler(service, endpoint);
+		if (handler == null) {
+			handler = new GatewayHandlerImpl();
+		}
 
 		ListenableFuture<Response> responseFuture = listeningExecutorService
-				.submit(new CallableHandler(topChannel, request));
+				.submit(new CallableHandler(handler, topChannel, request));
 
 		Futures.addCallback(responseFuture, new FutureCallback<Response>() {
 			@Override
@@ -119,6 +126,15 @@ public class RequestRouter extends SimpleChannelInboundHandler<Request> {
 				return;
 			}
 		});
+	}
+
+	private RequestHandler getRequestHandler(String service, String endpoint) {
+		SubChannel subChannel = topChannel.getSubChannel(service);
+		RequestHandler handler = null;
+		if (subChannel != null) {
+			handler = subChannel.getRequestHandler(endpoint);
+		}
+		return handler;
 	}
 
 	@Override
@@ -170,9 +186,10 @@ public class RequestRouter extends SimpleChannelInboundHandler<Request> {
 	private class CallableHandler implements Callable<Response> {
 		private final Request request;
 		private final TChannel topChannel;
-		private final GatewayHandlerImpl handler = new GatewayHandlerImpl();
+		private final RequestHandler handler;
 
-		public CallableHandler(TChannel topChannel, Request request) {
+		public CallableHandler(RequestHandler handler, TChannel topChannel, Request request) {
+			this.handler = handler;
 			this.topChannel = topChannel;
 			this.request = request;
 		}

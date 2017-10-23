@@ -54,6 +54,16 @@ public class HostConfigDTO {
 	 */
 	private List<EurekaZoneDTO> zoneList = new ArrayList<EurekaZoneDTO>();
 
+	private List<EurekaZoneDTO> ezlist = new ArrayList<>();
+
+	public List<EurekaZoneDTO> getEzlist() {
+		return ezlist;
+	}
+
+	public void setEzlist(List<EurekaZoneDTO> ezlist) {
+		this.ezlist = ezlist;
+	}
+
 	public String getIp() {
 		return ip;
 	}
