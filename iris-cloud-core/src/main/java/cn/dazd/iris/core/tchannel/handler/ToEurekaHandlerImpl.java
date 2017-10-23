@@ -12,6 +12,7 @@ import com.uber.tchannel.messages.ThriftResponse;
 import cn.dazd.iris.core.tchannel.thrift.HostInfo;
 import cn.dazd.iris.core.tchannel.thrift.Result;
 import cn.dazd.iris.core.tchannel.thrift.eureka.EurekaService;
+import cn.dazd.iris.core.tchannel.thrift.eureka.EurekaService.toEureka_args;
 
 /**
  * @author Administrator
@@ -25,16 +26,13 @@ public class ToEurekaHandlerImpl
 	@Override
 	public ThriftResponse<EurekaService.toEureka_result> handleImpl(
 			ThriftRequest<EurekaService.toEureka_args> request) {
-
-		HostInfo hostInfo = request.getBody(EurekaService.toEureka_args.class).getHostInfo();
+		toEureka_args args = request.getBody(EurekaService.toEureka_args.class);
+		HostInfo hostInfo = args.getHostInfo();
 		l.info("=============>" + hostInfo.getIp());
+		l.info("=============>" + args.getEndpoints().toArray().toString());
 		EurekaService.toEureka_result re = new EurekaService.toEureka_result();
 		re.setSuccess(new Result() {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
-
 			{
 				this.setCode(200);
 				this.setData("ok");

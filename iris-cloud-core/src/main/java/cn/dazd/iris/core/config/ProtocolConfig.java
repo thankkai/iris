@@ -17,6 +17,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.uber.tchannel.api.handlers.RequestHandler;
 import com.uber.tchannel.messages.ThriftRequest;
+import com.uber.tchannel.messages.ThriftResponse;
 
 import cn.dazd.iris.core.annotation.EnableEurekaServer;
 import cn.dazd.iris.core.annotation.EnableGatewayProxy;
@@ -32,6 +33,7 @@ import cn.dazd.iris.core.plugin.PluginCollector;
 import cn.dazd.iris.core.router.RpcKits;
 import cn.dazd.iris.core.tchannel.thrift.HostInfo;
 import cn.dazd.iris.core.tchannel.thrift.eureka.EurekaService.toEureka_args;
+import cn.dazd.iris.core.tchannel.thrift.eureka.EurekaService.toEureka_result;
 
 /**
  * 配置所需要的资源
@@ -80,15 +82,16 @@ public final class ProtocolConfig {
 			@SuppressWarnings("rawtypes")
 			ThriftRequest<TBase> request = new ThriftRequest.Builder<TBase>(ProtocolBuilder.EUREKA_SERVICE,
 					ProtocolBuilder.EUREKA_ENDPOINT).setBody(args).build();
-			boolean isError = RpcKits.sendRequest(request, new ArrayList<InetSocketAddress>() {
+			ThriftResponse<TBase> future = RpcKits.sendRequest(request, new ArrayList<InetSocketAddress>() {
 				private static final long serialVersionUID = -2168116154462801927L;
 				{
-					for (EurekaZoneDTO obj : hcDTO.getEzlist()) {
+					for (EurekaZoneDTO obj : hcDTO.getZoneList()) {
 						this.add(new InetSocketAddress(obj.getIp(), obj.getPort()));
 					}
 				}
-			}).isError();
-			if (!isError == true) {
+			});
+			toEureka_result result = (toEureka_result) future.getBody(TBase.class);
+			if (!future.isError() == true) {
 				l.log(Level.SEVERE, "注册中心未连接成功，启动失败。");
 				throw new RuntimeException("严重：注册中心未连接成功，启动失败。");
 			}

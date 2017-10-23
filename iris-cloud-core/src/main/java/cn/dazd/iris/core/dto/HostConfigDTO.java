@@ -52,17 +52,7 @@ public class HostConfigDTO {
 	/**
 	 * 注册中心配置列表
 	 */
-	private List<EurekaZoneDTO> zoneList = new ArrayList<EurekaZoneDTO>();
-
-	private List<EurekaZoneDTO> ezlist = new ArrayList<>();
-
-	public List<EurekaZoneDTO> getEzlist() {
-		return ezlist;
-	}
-
-	public void setEzlist(List<EurekaZoneDTO> ezlist) {
-		this.ezlist = ezlist;
-	}
+	final List<EurekaZoneDTO> zoneList = new ArrayList<EurekaZoneDTO>();
 
 	public String getIp() {
 		return ip;
@@ -138,9 +128,5 @@ public class HostConfigDTO {
 
 	public List<EurekaZoneDTO> getZoneList() {
 		return zoneList;
-	}
-
-	public void setZoneList(List<EurekaZoneDTO> zoneList) {
-		this.zoneList = zoneList;
 	}
 }

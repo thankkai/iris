@@ -3,6 +3,7 @@ package cn.dazd.iris.core.kit;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -16,6 +17,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import cn.dazd.iris.core.config.ProtocolHeader;
+import cn.dazd.iris.core.dto.EurekaZoneDTO;
 import cn.dazd.iris.core.dto.HostConfigDTO;
 
 /**
@@ -58,7 +60,6 @@ public class HostConfigKits {
 	 * 
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public static HostConfigDTO getAppConfig() {
 		if (hostConfigDTO == null) {
 			try {
@@ -79,8 +80,10 @@ public class HostConfigKits {
 
 				JsonElement defaultZone = host.get("defaultZone");
 				if (null != defaultZone) {
-					hostConfigDTO.setZoneList(
-							gson.fromJson(host.get("defaultZone"), hostConfigDTO.getZoneList().getClass()));
+					Type type = new TypeToken<List<EurekaZoneDTO>>() {
+						private static final long serialVersionUID = 1L;
+					}.getType();
+					hostConfigDTO.getZoneList().addAll(gson.fromJson(host.get("defaultZone"), type));
 				}
 			} catch (Exception e) {
 				logger.error("加载host配置文件失败，" + e.getMessage());
