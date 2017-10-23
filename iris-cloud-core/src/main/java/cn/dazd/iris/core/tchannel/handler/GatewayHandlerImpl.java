@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 
 import org.apache.thrift.TBase;
 
-import com.uber.tchannel.api.TChannel;
 import com.uber.tchannel.api.handlers.ThriftRequestHandler;
 import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
@@ -19,12 +18,6 @@ import cn.dazd.iris.core.router.RpcKits;
 public final class GatewayHandlerImpl extends ThriftRequestHandler<org.apache.thrift.TBase, TBase> {
 
 	final Logger l = Logger.getLogger("GatewayHandlerImpl");
-	private static TChannel TCHANNEL_CLIENT;
-	{
-		if (TCHANNEL_CLIENT == null) {
-			TCHANNEL_CLIENT = new TChannel.Builder("iris-cloud-client").build();
-		}
-	}
 
 	// 代理把接收到请求及数据，在这里做转发
 	@SuppressWarnings({ "serial", "unchecked" })

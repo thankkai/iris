@@ -20,7 +20,7 @@ import org.springframework.util.ClassUtils;
 
 import cn.dazd.iris.core.annotation.AnnotationTypeFilter;
 import cn.dazd.iris.core.annotation.ApiAnnotation;
-import cn.dazd.iris.core.config.ProtocolBuilder;
+import cn.dazd.iris.core.config.ProtocolConfig;
 import cn.dazd.iris.core.exception.IFaceUnimplementedException;
 import cn.dazd.iris.core.exception.MethodInvokeException;
 import cn.dazd.iris.core.tchannel.handler.ApiHandlerImpl;
@@ -40,6 +40,8 @@ public class ApiRegistryKits {
 	private final List<String> packagesList = new LinkedList<String>();
 
 	private final List<AnnotationTypeFilter> typeFilters = new LinkedList<AnnotationTypeFilter>();
+
+	public final static String ENDPOINT_SEPARATOR = "::";
 
 	final Logger l = Logger.getLogger("ApiRegistryKits");
 
@@ -136,11 +138,11 @@ public class ApiRegistryKits {
 				Class<?> result_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
 						structClassNamePrefix + RESULT_CLASS_SUFFIX);
 
-				// 注册方法，方法名严格区分大小写
-				ProtocolBuilder.gettChannel().makeSubChannel(service.getSimpleName()).register(
-						new StringBuffer(service.getSimpleName()).append("::").append(method.getName()).toString(),
-						new ApiHandlerImpl(instanceType.newInstance(), method, args_class, result_class,
-								getArgsMethods(args_class.newInstance().toString())));
+				// 生成endpoint集合，endpoint名称严格区分大小写
+				String key = new StringBuffer(service.getSimpleName()).append(ENDPOINT_SEPARATOR)
+						.append(method.getName()).toString();
+				ProtocolConfig.ENDPOINT_HANDLER.put(key, new ApiHandlerImpl(instanceType.newInstance(), method,
+						args_class, result_class, getArgsMethods(args_class.newInstance().toString())));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -22,7 +22,6 @@ import com.uber.tchannel.messages.generated.Meta;
 import cn.dazd.iris.core.config.ProtocolConfig.ConfigWrap;
 import cn.dazd.iris.core.dto.HostConfigDTO;
 import cn.dazd.iris.core.exception.MethodScanConfigException;
-import cn.dazd.iris.core.exception.TchannelUnknownException;
 import cn.dazd.iris.core.kit.ApiRegistryKits;
 import cn.dazd.iris.core.kit.HostConfigKits;
 import cn.dazd.iris.core.kit.PropertiesUtil;
@@ -41,10 +40,10 @@ final public class ProtocolBuilder {
 	private static TChannel tChannel = null;
 	private final static ExecutorService EXECUTOR_SERVICE = new ForkJoinPool();
 
+	final static String EUREKA_SERVICE = EurekaService.class.getSimpleName();
+	final static String EUREKA_ENDPOINT = new StringBuffer(EUREKA_SERVICE).append("::").append("toEureka").toString();
+
 	public static TChannel gettChannel() {
-		if (tChannel == null) {
-			throw new TchannelUnknownException("it must not be null.");
-		}
 		return tChannel;
 	}
 
@@ -61,20 +60,14 @@ final public class ProtocolBuilder {
 		rwl.writeLock().lock();
 		try {
 			tChannel = createServer();
-			// 需要进行注册服务
-			if (ConfigWrap.ENABLE_TO_EUREKA) {
-
-			}
 
 			// 启动注册中心
 			if (ConfigWrap.ENABLE_EUREKA_SERVER) {
-				String service = EurekaService.class.getSimpleName();
-				String endpoint = new StringBuffer(service).append("::").append("toEureka").toString();
-				tChannel.makeSubChannel(service).register(endpoint, new ToEurekaHandlerImpl());
+				tChannel.makeSubChannel(EUREKA_SERVICE).register(EUREKA_ENDPOINT, new ToEurekaHandlerImpl());
 			}
 
 			// 注册api接口
-			apiRegistry();
+			endpointRegistry();
 			// 注册SPI接口
 			// spiRegistry();
 
@@ -120,23 +113,11 @@ final public class ProtocolBuilder {
 	/**
 	 * api标记类里的方法注册到tchannel
 	 */
-	static void apiRegistry() {
-		try {
-			String yamlStr = PropertiesUtil.loadYaml(HostConfigKits.APPLICATION_APPCONFIG_FILE);
-			Gson gson = new Gson();
-			JsonObject jo = gson.fromJson(yamlStr, JsonObject.class);
-			JsonArray array = jo.get("package").getAsJsonArray();
-			if (null == array) {
-				throw new MethodScanConfigException("the property for the package must not be null.");
-			}
-			List<String> property = new ArrayList<String>();
-			for (JsonElement jsonElement : array) {
-				property.add(jsonElement.getAsString());
-			}
-			ApiRegistryKits spm = new ApiRegistryKits(property);
-			spm.initGlobalClassInstance();
-		} catch (Exception e) {
-			l.info(e.getMessage());
+	static void endpointRegistry() {
+		for (String key : ProtocolConfig.ENDPOINT_HANDLER.keySet()) {
+			String service = key
+					.replaceFirst(new StringBuffer(ApiRegistryKits.ENDPOINT_SEPARATOR).append(".+").toString(), "");
+			tChannel.makeSubChannel(service).register(key, ProtocolConfig.ENDPOINT_HANDLER.get(key));
 		}
 	}
 

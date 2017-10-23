@@ -17,7 +17,7 @@ import io.netty.buffer.ByteBuf;
 
 public class RpcKits {
 
-	private static TChannel TCHANNEL_CLIENT = new TChannel.Builder("iris-gateway-client").build();
+	public static TChannel TCHANNEL_CLIENT = new TChannel.Builder("iris-gateway-client").build();
 
 	/**
 	 * 转发请求

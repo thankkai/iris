@@ -20,7 +20,7 @@ public class ProtocolBootstrap {
 	 */
 	public void run(AbstarctProtocolConfig aac) {
 		try {
-			ProtocolConfig.init(aac);
+			ProtocolConfig.initialize(aac);
 			ProtocolBuilder.build();
 			ChannelFuture cf = ProtocolBuilder.gettChannel().listen();
 			Runtime.getRuntime().addShutdownHook(new ProtocolShutdown());
