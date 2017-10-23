@@ -1,9 +1,6 @@
 package cn.dazd.iris.core.kit;
 
-<<<<<<< HEAD
-=======
 import java.lang.reflect.Type;
->>>>>>> branch 'iris_alpha_0.2.0' of https://github.com/thankkai/iris.git
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,29 +70,17 @@ public class HostConfigKits {
 				int port = host.get("port").getAsInt();
 				String serviceName = host.get("serviceName").getAsString();
 				int processId = host.get("processId").getAsInt();
-<<<<<<< HEAD
-=======
 
->>>>>>> branch 'iris_alpha_0.2.0' of https://github.com/thankkai/iris.git
 				hostConfigDTO = new HostConfigDTO();
 				hostConfigDTO.setProcessId(processId);
 				hostConfigDTO.setIp(ip);
 				hostConfigDTO.setPort(port);
 				hostConfigDTO.setServiceName(serviceName);
-<<<<<<< HEAD
+
 				JsonElement defaultZone = host.get("defaultZone");
 				if (null != defaultZone) {
 					hostConfigDTO.setZoneList(
 							gson.fromJson(host.get("defaultZone"), hostConfigDTO.getZoneList().getClass()));
-=======
-
-				JsonElement routes = host.get("defaultZone");
-				if (null != routes) {
-					@SuppressWarnings("serial")
-					Type ezType = new TypeToken<List<EurekaZoneDTO>>() {
-					}.getType();
-					hostConfigDTO.setEzlist(gson.fromJson(routes, ezType));
->>>>>>> branch 'iris_alpha_0.2.0' of https://github.com/thankkai/iris.git
 				}
 			} catch (Exception e) {
 				logger.error("加载host配置文件失败，" + e.getMessage());
