@@ -1,5 +1,8 @@
 package cn.dazd.iris.core.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cn.dazd.iris.core.kit.HostConfigKits;
 
 /**
@@ -45,6 +48,11 @@ public class HostConfigDTO {
 	 * 实例所在位置简称：hz、nj、bj
 	 */
 	private String dcName;
+
+	/**
+	 * 注册中心配置列表
+	 */
+	private List<EurekaZoneDTO> zoneList = new ArrayList<EurekaZoneDTO>();
 
 	public String getIp() {
 		return ip;
@@ -116,5 +124,13 @@ public class HostConfigDTO {
 
 	public void setHostSecret(String hostSecret) {
 		this.hostSecret = hostSecret;
+	}
+
+	public List<EurekaZoneDTO> getZoneList() {
+		return zoneList;
+	}
+
+	public void setZoneList(List<EurekaZoneDTO> zoneList) {
+		this.zoneList = zoneList;
 	}
 }
