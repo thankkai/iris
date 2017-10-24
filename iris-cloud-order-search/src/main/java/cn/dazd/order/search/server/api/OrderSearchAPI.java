@@ -1,18 +1,26 @@
 package cn.dazd.order.search.server.api;
 
-import java.nio.ByteBuffer;
+import java.util.Calendar;
+import java.util.Locale;
+
+import org.apache.thrift.TException;
 
 import cn.dazd.iris.core.annotation.ApiAnnotation;
+import cn.dazd.iris.core.tchannel.thrift.Protocol;
+import cn.dazd.iris.core.tchannel.thrift.ProviderService;
+import cn.dazd.iris.core.tchannel.thrift.ProviderService.Iface;
+import cn.dazd.iris.core.tchannel.thrift.Result;
 
-public class OrderSearchAPI {
+@ApiAnnotation(service = ProviderService.class)
+public class OrderSearchAPI implements Iface {
 
-	public ByteBuffer searchBySample(ByteBuffer args) {
-		String str = new String("ordersearch is good!");
-		return ByteBuffer.wrap(str.getBytes());
+	public Result gateway(Protocol body, Protocol GBody2) throws TException {
+		// TODO Auto-generated method stub
+		return new Result(50, Calendar.getInstance(Locale.CHINESE).getTimeInMillis() + "=打手动阀手动阀见打发", "翻噶啊手动阀手动阀地方是");
 	}
 
-	public ByteBuffer searchBySample2(ByteBuffer args) {
-		String str = new String("ordersearch is good!");
-		return ByteBuffer.wrap(str.getBytes());
+	public Result proxy(Protocol body) throws TException {
+		// TODO Auto-generated method stub
+		return new Result(99, "了解了解了解了解了", "可理解拉开距离就");
 	}
 }

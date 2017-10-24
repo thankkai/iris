@@ -1,7 +1,9 @@
 package cn.dazd.iris.core.kit;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -9,10 +11,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import cn.dazd.iris.core.config.ProtocolHeader;
+import cn.dazd.iris.core.dto.EurekaZoneDTO;
 import cn.dazd.iris.core.dto.HostConfigDTO;
 
 /**
@@ -72,9 +77,16 @@ public class HostConfigKits {
 				hostConfigDTO.setIp(ip);
 				hostConfigDTO.setPort(port);
 				hostConfigDTO.setServiceName(serviceName);
+
+				JsonElement defaultZone = host.get("defaultZone");
+				if (null != defaultZone) {
+					Type type = new TypeToken<List<EurekaZoneDTO>>() {
+						private static final long serialVersionUID = 1L;
+					}.getType();
+					hostConfigDTO.getZoneList().addAll(gson.fromJson(host.get("defaultZone"), type));
+				}
 			} catch (Exception e) {
-				logger.error("加载host配置文件失败，请检查。文件名：" + APPLICATION_APPCONFIG_FILE);
-				logger.error("异常信息：" + e.getMessage());
+				logger.error("加载host配置文件失败，" + e.getMessage());
 			}
 		}
 		return hostConfigDTO;

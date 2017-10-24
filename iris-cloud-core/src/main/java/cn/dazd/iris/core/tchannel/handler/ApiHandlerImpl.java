@@ -7,10 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
@@ -26,63 +23,37 @@ import com.uber.tchannel.messages.ThriftResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 
-public class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?>> {
+// API接口执行器
+public final class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?>> {
 
 	final Logger l = Logger.getLogger("ApiHandlerImpl");
 	// 实例对象
 	final Object instance;
 	// 实例中的方法
 	final Method method;
-	// 方法中参数的对象集
-	final Class<?>[] methodTypes;
-	// service里参数构造体类的路径前缀
-	final String structClassNamePrefix;
+	// service的接口里构造体的getXxx()方法名集合
+	final List<String> argsMethods = new ArrayList<String>();
+	// args对象
+	final Class<?> args_class;
+	// result对象
+	final Class<?> result_class;
 
-	/**
-	 * 
-	 * @param servicePackage
-	 *            thrift生成的service类的全路径
-	 * @param instance
-	 * @param method
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 */
-	public ApiHandlerImpl(String serviceClassName, Object instance, Method method)
-			throws InstantiationException, IllegalAccessException {
+	public ApiHandlerImpl(Object instance, Method method, Class<?> args_class, Class<?> result_class,
+			List<String> argsMethods) throws InstantiationException, IllegalAccessException {
 		this.instance = instance;
 		this.method = method;
-		methodTypes = this.method.getParameterTypes();
-		structClassNamePrefix = new StringBuffer(serviceClassName).append("$").append(this.method.getName()).append("_")
-				.toString();
+		this.args_class = args_class;
+		this.result_class = result_class;
+		this.argsMethods.addAll(argsMethods);
 	}
 
 	@Override
 	public ThriftResponse<TBase<?, ?>> handleImpl(ThriftRequest<TBase<?, ?>> request) {
 		long stime = Calendar.getInstance().getTimeInMillis();
-		Class<?> args_class = null;
-		Object args_object = null;
-		Object return_object = null;
-		Class<?> result_class = null;
-		Constructor<?> result_struct = null;
 		Object result_object = null;
 		try {
-			// 获取args类
-			args_class = ClassUtils.getClass(getClass().getClassLoader(), structClassNamePrefix + "args");
-			// 实例化一个args对象
-			args_object = args_class.newInstance();
-
-			// 获取args里获取构造体参数的方法名,反射的时候需要用到
-			List<String> args_methods = new ArrayList<String>();
-			Pattern p = Pattern.compile("(\\w+)[:]", Pattern.CASE_INSENSITIVE);
-			Matcher m = p.matcher(args_object.toString());
-			while (m.find()) {
-				char[] mstr = m.group(1).toCharArray();
-				if (mstr[0] > 96 && mstr[0] < 123) {
-					mstr[0] -= 32;
-				}
-				args_methods.add("get" + new String(mstr));
-			}
-
+			Constructor<?> result_struct = null;
+			Object args_object = args_class.newInstance();
 			// 填充args对象
 			ByteBuf bb = request.getArg3();
 			ByteBufInputStream bis = new ByteBufInputStream(bb);
@@ -91,20 +62,16 @@ public class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?
 			((TSerializable) args_object).read(tp);
 			// 获取args对象里，客户端传送过来的构造体列表
 			List<Object> args_subobjs = new ArrayList<Object>();
-			for (String key : args_methods) {
+			for (String key : argsMethods) {
 				args_subobjs.add(MethodUtils.invokeExactMethod(args_object, key));
 			}
-			// 获取方法执行后的返回值，参数必须是thrift构造体
-			return_object = MethodUtils.invokeExactMethod(instance, method.getName(), args_subobjs.toArray());
-
-			// 获取result类
-			result_class = ClassUtils.getClass(getClass().getClassLoader(), structClassNamePrefix + "result");
+			// 获取业务执行后的返回值，返回值类型必须是thrift构造体
+			Object return_object = MethodUtils.invokeExactMethod(instance, method.getName(), args_subobjs.toArray(),
+					method.getParameterTypes());
+			// 设置result的构造函数
 			result_struct = result_class.getConstructor(this.method.getReturnType());
-			// 获取result对象
+			// 实例化result对象
 			result_object = result_struct.newInstance(return_object);
-
-		} catch (ClassNotFoundException e1) {
-			e1.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
@@ -122,6 +89,7 @@ public class ApiHandlerImpl extends ThriftRequestHandler<TBase<?, ?>, TBase<?, ?
 		}
 		long etime = Calendar.getInstance().getTimeInMillis();
 		l.info("=======耗时：" + (etime - stime));
+		// 返回实例化后的result对象
 		return new ThriftResponse.Builder<TBase<?, ?>>(request).setTransportHeaders(request.getTransportHeaders())
 				.setBody((TBase<?, ?>) result_object).build();
 	}

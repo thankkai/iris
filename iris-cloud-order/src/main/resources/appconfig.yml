@@ -1,13 +1,17 @@
 host:
-  ip: 192.168.199.112
+  ip:  172.30.22.134
   port: 30100
   serviceName: iris-cloud-order-create
   processId: 1
   defaultZone: 
   - ip: iris-cloud-eureka-1
     port: 30001
-  - ip: iris-cloud-eureka-2
-    port: 30002
+  - ip: iris-cloud-eureka-1
+    port: 30001
+  - ip: iris-cloud-eureka-1
+    port: 30001
+  - ip: iris-cloud-eureka-1
+    port: 30001     
 package: 
   - cn.dazd.order.server.api
   - cn.dazd.order.server.spi

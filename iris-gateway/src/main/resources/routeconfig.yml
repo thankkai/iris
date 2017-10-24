@@ -1,7 +1,12 @@
 routes:
-   orderapi: 
-    methodName: .+
-    serviceId: spring-cloud-order-create
-   ordersearch:
-    methodName: .+
-    serviceId: spring-cloud-order-search
+<<<<<<< HEAD
+   - path: /order/ProviderService
+     serviceName: spring-cloud-order-create
+   - path: /order/OrderSearch
+     serviceName: spring-cloud-order-search
+=======
+   - path: order/ProviderService/.*
+     serviceId: spring-cloud-order-create
+   - path: order/OrderSearch/.*
+     serviceId: spring-cloud-order-search
+>>>>>>> branch 'iris_alpha_0.2.0' of https://github.com/thankkai/iris.git

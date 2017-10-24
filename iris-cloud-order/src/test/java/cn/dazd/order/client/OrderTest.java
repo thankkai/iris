@@ -1,8 +1,6 @@
 package cn.dazd.order.client;
 
 import java.net.InetAddress;
-import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
@@ -19,7 +17,7 @@ import com.uber.tchannel.messages.ThriftRequest;
 import com.uber.tchannel.messages.ThriftResponse;
 
 import cn.dazd.iris.core.tchannel.thrift.Protocol;
-import cn.dazd.iris.core.tchannel.thrift.Result;
+import cn.dazd.iris.core.tchannel.thrift.ProviderService;
 import io.netty.buffer.ByteBufInputStream;
 
 public class OrderTest {
@@ -37,20 +35,23 @@ public class OrderTest {
 			tchannel = new TChannel.Builder("iris-cloud-client").build();
 			// gateway_args args = new
 			// gateway_args(ByteBuffer.wrap("我给点数据试试！".getBytes()));
-			Protocol ppp = new Protocol();
-
+			ProviderService.gateway_args args = new ProviderService.gateway_args();
+			args.setBody(new Protocol("", "", "", "", "", ""));
+			args.setGBody2(new Protocol("", "", "", "", "", ""));
 			// Protocol2 args = new Protocol2(ppp, ppp);
 
-			ListenableFuture<ThriftResponse<Result>> future = tchannel.makeSubChannel("iris-cloud-client").send(
-					new ThriftRequest.Builder<Protocol>("orderapi", "updateorder").setBody(ppp).build(),
-					InetAddress.getLocalHost(), 30100);
-			ThriftResponse<Result> getResult = future.get();
+			ListenableFuture<ThriftResponse<ProviderService.gateway_result>> future = tchannel
+					.makeSubChannel("iris-cloud-client")
+					.send(new ThriftRequest.Builder<ProviderService.gateway_args>("ProviderService",
+							"ProviderService::gateway").setBody(args).setTimeout(3000).build(),
+							InetAddress.getLocalHost(), 30100);
+			ThriftResponse<ProviderService.gateway_result> getResult = future.get();
 			ByteBufInputStream bbf = new ByteBufInputStream(getResult.getArg3());
 			TTransport tt = new TIOStreamTransport(bbf);
 			TProtocol tp = new TBinaryProtocol(tt);
-			Result bbfx = new Result();
+			ProviderService.gateway_result bbfx = new ProviderService.gateway_result();
 			bbfx.read(tp);
-			l.info(new String(bbfx.getMessage()));
+			l.info(new String(bbfx.getSuccess().getMessage()));
 			// System.out.println(value.toString());
 		} catch (Exception e) {
 			e.printStackTrace();

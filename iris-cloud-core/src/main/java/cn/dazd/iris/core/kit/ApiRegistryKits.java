@@ -3,9 +3,12 @@ package cn.dazd.iris.core.kit;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -17,7 +20,7 @@ import org.springframework.util.ClassUtils;
 
 import cn.dazd.iris.core.annotation.AnnotationTypeFilter;
 import cn.dazd.iris.core.annotation.ApiAnnotation;
-import cn.dazd.iris.core.config.ProtocolBuilder;
+import cn.dazd.iris.core.config.ProtocolConfig;
 import cn.dazd.iris.core.exception.IFaceUnimplementedException;
 import cn.dazd.iris.core.exception.MethodInvokeException;
 import cn.dazd.iris.core.tchannel.handler.ApiHandlerImpl;
@@ -37,6 +40,8 @@ public class ApiRegistryKits {
 	private final List<String> packagesList = new LinkedList<String>();
 
 	private final List<AnnotationTypeFilter> typeFilters = new LinkedList<AnnotationTypeFilter>();
+
+	public final static String ENDPOINT_SEPARATOR = "::";
 
 	final Logger l = Logger.getLogger("ApiRegistryKits");
 
@@ -62,6 +67,8 @@ public class ApiRegistryKits {
 			}
 		}
 	}
+
+	final String IFACE_CLASSNAME_SUFFIX = "$Iface";
 
 	public boolean initGlobalClassInstance()
 			throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
@@ -89,8 +96,8 @@ public class ApiRegistryKits {
 									.getAllInterfaces(instanceType);
 							// 判断是否实现了iface接口
 							boolean isiface = false;
-							String ifaceClassName = new StringBuilder().append(service.getName()).append("$Iface")
-									.toString();
+							String ifaceClassName = new StringBuilder().append(service.getName())
+									.append(IFACE_CLASSNAME_SUFFIX).toString();
 							for (Class<?> faceclass : interfaces) {
 								if (ifaceClassName.equals(faceclass.getName())) {
 									isiface = true;
@@ -113,19 +120,61 @@ public class ApiRegistryKits {
 		return flag;
 	}
 
+	final String ARGS_CLASS_SUFFIX = "args";
+	final String RESULT_CLASS_SUFFIX = "result";
+
 	void scanMethod(Class<?> service, Class<?> instanceType) throws InstantiationException, IllegalAccessException {
 		// 获取声明的方法，即API接口
 		Method[] mt = instanceType.getDeclaredMethods();
 		try {
 			for (Method method : mt) {
 
-				// 注册方法，方法名严格区分大小写
-				ProtocolBuilder.gettChannel().makeSubChannel(service.getSimpleName()).register(
-						new StringBuffer(service.getSimpleName()).append("::").append(method.getName()).toString(),
-						new ApiHandlerImpl(service.getName(), instanceType.newInstance(), method));
+				String structClassNamePrefix = new StringBuffer(service.getName()).append("$").append(method.getName())
+						.append("_").toString();
+				// 获取args类
+				Class<?> args_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
+						structClassNamePrefix + ARGS_CLASS_SUFFIX);
+				// 获取result类
+				Class<?> result_class = org.apache.commons.lang3.ClassUtils.getClass(getClass().getClassLoader(),
+						structClassNamePrefix + RESULT_CLASS_SUFFIX);
+
+				// 生成endpoint集合，endpoint名称严格区分大小写
+				String key = new StringBuffer(service.getSimpleName()).append(ENDPOINT_SEPARATOR)
+						.append(method.getName()).toString();
+				ProtocolConfig.ENDPOINT_HANDLER.put(key, new ApiHandlerImpl(instanceType.newInstance(), method,
+						args_class, result_class, getArgsMethods(args_class.newInstance().toString())));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
+	final String argsMethodPrefix = "get";
+
+	/**
+	 * 获取args里构造体参数的方法名,反射的时候需要用到
+	 * 
+	 * @param args_class
+	 * @return
+	 */
+	List<String> getArgsMethods(String argsObjStr) {
+
+		List<String> args_methods = new ArrayList<String>();
+		try {
+			// 实例化一个args对象
+			Pattern p = Pattern.compile("(\\w+)[:]", Pattern.CASE_INSENSITIVE);
+			Matcher m = p.matcher(argsObjStr.toString());
+			while (m.find()) {
+				char[] mstr = m.group(1).toCharArray();
+				if (mstr[0] > 96 && mstr[0] < 123) {
+					mstr[0] -= 32;
+				}
+				args_methods.add(argsMethodPrefix + new String(mstr));
+			}
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
+		return args_methods;
+	}
+
 }
