@@ -53,7 +53,7 @@ public final class ProtocolConfig {
 
 	public final static Map<String, RequestHandler> ENDPOINT_HANDLER = new Hashtable<>();
 
-	private static boolean TO_EUREKA_STATUS = true;
+	private static boolean TO_EUREKA_STATUS = false;
 
 	static void initialize(AbstarctProtocolConfig config) {
 		config.configPlugin(IRIS_PLUGINS);
@@ -64,6 +64,7 @@ public final class ProtocolConfig {
 		// 判断是否标记了注册动作
 		if (AnnotationUtils.isAnnotationDeclaredLocally(EnableToEureka.class, config.getClass())) {
 			ConfigWrap.ENABLE_TO_EUREKA = true;
+			// 执行注册动作
 			toEureka();
 		}
 
@@ -117,28 +118,29 @@ public final class ProtocolConfig {
 				this.setServiceName(hcDTO.getServiceName());
 			}
 		});
-		final ThriftRequest<toEureka_args> request = new ThriftRequest.Builder<toEureka_args>(
-				ProtocolBuilder.EUREKA_SERVICE, ProtocolBuilder.EUREKA_ENDPOINT).setBody(args).build();
 
 		final CountDownLatch startLatch = new CountDownLatch(1);
 		final CountDownLatch threadLatch = new CountDownLatch(hcDTO.getZoneList().size());
 		Executor executor = Executors.newFixedThreadPool(hcDTO.getZoneList().size());
 		// 加载所有注册线程
 		for (final EurekaZoneDTO obj : hcDTO.getZoneList()) {
-			executor.execute(new RunnableWorker(startLatch, threadLatch, request, obj));
+			executor.execute(new RunnableWorker(startLatch, threadLatch, args, obj));
 		}
 		// 并发执行注册线程
+		l.log(Level.INFO, "服务注册线程加载完成。");
 		startLatch.countDown();
+		l.log(Level.INFO, "服务注册线程执行中……");
 		try {
 			threadLatch.await();
 			if (TO_EUREKA_STATUS == false) {
 				l.log(Level.SEVERE, "注册中心未连接成功，启动失败。");
 				System.exit(0);
 			} else {
-				l.info("注册已完成");
+				l.log(Level.INFO, "服务注册已完成。");
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 
@@ -156,10 +158,11 @@ public final class ProtocolConfig {
 		final EurekaZoneDTO obj;
 
 		public RunnableWorker(final CountDownLatch startLatch, final CountDownLatch threadLatch,
-				final ThriftRequest<toEureka_args> request, final EurekaZoneDTO obj) {
+				final toEureka_args args, final EurekaZoneDTO obj) {
 			this.startLatch = startLatch;
 			this.threadLatch = threadLatch;
-			this.request = request;
+			this.request = new ThriftRequest.Builder<toEureka_args>(ProtocolBuilder.EUREKA_SERVICE,
+					ProtocolBuilder.EUREKA_ENDPOINT).setBody(args).build();
 			this.obj = obj;
 		}
 
@@ -174,23 +177,18 @@ public final class ProtocolConfig {
 								this.add(new InetSocketAddress(obj.getIp(), obj.getPort()));
 							}
 						});
-				request.reset();
-				if (null == future) {
-					TO_EUREKA_STATUS = false;
-				}
-				l2.log(Level.SEVERE, "=====================>" + threadLatch.getCount());
-				toEureka_result result = future.getBody(toEureka_result.class);
-				if (result == null) {
-					TO_EUREKA_STATUS = false;
+				if (null != future) {
+					toEureka_result result = future.getBody(toEureka_result.class);
+					if (null != result) {
+						TO_EUREKA_STATUS = true;
+					}
 				}
 			} catch (InterruptedException | TChannelError | ExecutionException e) {
 				l2.log(Level.SEVERE, e.getMessage());
 			} finally {
 				threadLatch.countDown();
-				l2.log(Level.SEVERE, "=====================>" + threadLatch.getCount());
 			}
 		}
-
 	}
 
 	/**

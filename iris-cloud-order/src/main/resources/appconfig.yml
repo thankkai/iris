@@ -6,6 +6,12 @@ host:
   defaultZone: 
   - ip: iris-cloud-eureka-1
     port: 30001
+  - ip: iris-cloud-eureka-1
+    port: 30001
+  - ip: iris-cloud-eureka-1
+    port: 30001
+  - ip: iris-cloud-eureka-1
+    port: 30001     
 package: 
   - cn.dazd.order.server.api
   - cn.dazd.order.server.spi
